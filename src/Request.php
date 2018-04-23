@@ -88,6 +88,15 @@ class Request {
     }
 
     /**
+     * 获取文件
+     * @param $key
+     * @return bool|mixed
+     */
+    public function files($key) {
+        return $this->files[$key] ?? false;
+    }
+
+    /**
      * 根据请求的content-type处理post字段的数据
      * @return array
      */
@@ -98,7 +107,7 @@ class Request {
         }
 
         //如果是空根据content-type处理
-        $contentType = $this->contentType($charset,$boundary);
+        $contentType = $this->contentType($charset, $boundary);
 
         //处理post源数据
         switch ($contentType) {
@@ -106,7 +115,7 @@ class Request {
                 parse_str($this->postSource, $post);
                 break;
             case 'form-data':
-                $post = $this->dealFormData($this->postSource,$boundary);
+                $post = $this->dealFormData($this->postSource, $boundary);
                 break;
             case 'json':
                 $post = json_decode($this->postSource, true);
@@ -128,7 +137,7 @@ class Request {
      * @param $boundary
      * @return mixed
      */
-    private function dealFormData($data,$boundary) {
+    private function dealFormData($data, $boundary) {
 //        preg_match_all("/$boundary\nContent-Disposition:(.+?)\n(Content-Type:.+?\n|)([\s\S]+?)\n(|$boundary--)/",
 //            $data,$matches);
 //        print_r($matches);
@@ -235,11 +244,55 @@ class Request {
      */
     public function input($key, $type = null) {
         if (!is_null($type)) {
-            return !in_array($type, ['post', 'get', 'cookie']) ??
+            return !in_array($type, ['post', 'get', 'cookie']) ? false :
                 $this->$type[$key] ?? false;
         }
         return $this->post[$key] ??
             $this->get[$key] ??
             $this->cookie[$key] ?? false;
+    }
+
+    /**
+     * 请求方法
+     * @return string
+     */
+    public function method() {
+        return $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    }
+
+    /**
+     * 请求路径信息
+     * @return string
+     */
+    public function path_info() {
+        return $_SERVER['PATH_INFO'] ?? '';
+    }
+
+    /**
+     * 返回请求域名
+     * @return string
+     */
+    public function domain() {
+        return $_SERVER['HTTP_HOST'];
+    }
+
+    /**
+     * 获取请求主页
+     * @return string
+     */
+    public function home() {
+        $home = $_SERVER['REQUEST_URI'];
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            $home = substr($_SERVER['REQUEST_URI'], 0, strpos($home, '?'));
+        }
+        if (isset($_SERVER['PATH_INFO']) && !empty($_SERVER['PATH_INFO'])) {
+            $home = str_replace($_SERVER['PATH_INFO'], '', $home);
+        } else {
+            $home = substr($home, 0, strrpos($home, '/'));
+        }
+        if (!isset($_SERVER['REQUEST_SCHEME'])) {
+            $_SERVER['REQUEST_SCHEME'] = 'http';
+        }
+        return '//' . $_SERVER['HTTP_HOST'] . $home;
     }
 }
