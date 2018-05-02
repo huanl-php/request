@@ -265,7 +265,7 @@ class Request {
      * @return string
      */
     public function path_info() {
-        return $_SERVER['PATH_INFO'] ?? '';
+        return $_SERVER['PATH_INFO'] ?? '/';
     }
 
     /**
