@@ -4,6 +4,8 @@
 namespace HuanL\Request;
 
 
+use foo\bar;
+
 class Response {
 
     /**
@@ -14,7 +16,9 @@ class Response {
         'html' => 'text/html',
         'json' => 'application/json',
         'xml' => 'text/xml',
-        'file' => 'application/octet-stream'
+        'file' => 'application/octet-stream',
+        'jpg' => 'image/jpeg',
+        'png' => 'image/png'
     ];
 
     /**
@@ -23,8 +27,121 @@ class Response {
      */
     public $http_status_code = [
         200 => 'HTTP/1.1 200 OK',
+        301 => 'HTTP/1.1 301 Moved Permanently',
+        302 => 'HTTP/1.1 302 Found',
+        400 => 'HTTP/1.1 400 Bad Request',
+        401 => 'HTTP/1.1 401 Unauthorized',
+        402 => 'HTTP/1.1 402 Payment Required',
+        403 => 'HTTP/1.1 403 Forbidden',
         404 => 'HTTP/1.1 404 Not Found'
     ];
+
+    /**
+     * 资源存放
+     * @var mixed
+     */
+    private $response;
+
+    /**
+     * 资源类型
+     * @var string
+     */
+    private $content_type = 'html';
+
+    /**
+     * 页面编码
+     * @var string
+     */
+    private $charset = 'UTF-8';
+
+
+    public function __construct($code = 200, string $type = 'html', $response = null) {
+        //根据参数的个数来判断参数的含义
+        switch (func_num_args()) {
+            case 1:
+                //一个参数认为只输入了资源
+                $response = $code;
+                $code = 200;
+                $type = 'html';
+                break;
+            case 2:
+                $response = $type;
+                $type = $code;
+                $code = 200;
+                break;
+        }
+        $this->statusCode($code)->contentType($type)->setResponse($response);
+    }
+
+    /**
+     * 设置资源
+     * @param $response
+     * @return Response
+     */
+    public function setResponse($response): Response {
+        $this->response = $response;
+        return $this;
+    }
+
+    /**
+     * 获取资源
+     * @return string
+     */
+    public function getResponse(): string {
+        //判断资源的类型,如果是对象类型,调用tostring方法
+        //如果是数组就根据当前的内容类型编码成相对应的数据类型
+        //如果是字符串,直接返回了,如果都不是,返回空的字符串
+        if (is_object($this->response)) {
+            //对象类型,根据当前类型判断
+            switch ($this->content_type) {
+                case 'xml':
+                    return $this->object2xmlstr($this->response);
+                case 'json':
+                    return json_decode($this->response, JSON_UNESCAPED_UNICODE);
+                default:
+                    if (method_exists($this->response, '__toString')) {
+                        return $this->response->__toString();
+                    }
+                    break;
+            }
+        } else if (is_array($this->response)) {
+            if ($this->content_type == 'xml') {
+                return $this->object2xmlstr($this->response);
+            } else {
+                return json_encode($this->response, JSON_UNESCAPED_UNICODE);
+            }
+        } else if (is_string($this->response)) {
+            return $this->response;
+        }
+        return '';
+    }
+
+
+    /**
+     * 对象转成xml字符串
+     * @param $array
+     * @param string $label
+     * @param bool $frist
+     * @return string
+     */
+    private function object2xmlstr($array, $label = 'node', $frist = true): string {
+        if (is_object($array)) {
+            $array = json_decode(json_encode($array), true);
+        }
+        if (!is_array($array) || sizeof($array) <= 0) return '';
+        $xml = ($frist ? '<?xml version="1.0" encoding="' . $this->charset . '"?>' : '') . "<$label>";
+        foreach ($array as $key => $val) {
+            if (is_numeric($val)) {
+                $xml .= "<$key>$val</$key>";
+            } else if (is_array($val)) {
+                $xml .= $this->object2xmlstr($val, $key, false);
+            } else {
+                $xml .= "<$key><![CDATA[$val]]></$key>";
+            }
+        }
+        $xml .= "</$label>";
+        return $xml;
+    }
 
     /**
      * 设置返回的文件类型
@@ -33,7 +150,10 @@ class Response {
      * @return Response
      */
     public function contentType(string $type, string $charset = 'UTF-8'): Response {
-        header('Content-Type: ' . $this->type2content($type) . '; charset=' . $charset);
+        $this->content_type = $type;
+        $this->charset = $charset;
+        $this->header('Content-Type: ' . $this->type2content($type) .
+            ($charset == false ? '; charset=' . $charset : ''));
         return $this;
     }
 
@@ -74,8 +194,41 @@ class Response {
      * @param int $code
      * @return Response
      */
-    public function header(string $string, bool $replace, int $code): Response {
+    public function header(string $string, bool $replace = true, int $code = null): Response {
         header($string, $replace, $code);
+        return $this;
+    }
+
+    /**
+     * 内容长度
+     * @param $length
+     * @return Response
+     */
+    public function contentLength($length): Response {
+        return $this->header('Content-Length: ' . $length);
+    }
+
+    /**
+     * 禁用缓存
+     * @return $this
+     */
+    public function banCache(): Response {
+        $this->header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
+        $this->header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        return $this;
+    }
+
+    /**
+     * 下载文件
+     * @param $filename
+     * @param $filesize
+     * @return $this
+     */
+    public function download($filename, $filesize): Response {
+        $this->contentType('file', false);
+        $this->header('Accept-Ranges:bytes');
+        $this->header('Accept-Length:' . $filesize);
+        $this->header('Content-Disposition: attachment; filename=' . $filename);
         return $this;
     }
 }
