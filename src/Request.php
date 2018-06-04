@@ -28,7 +28,11 @@ class Request {
      */
     private $cookie = [];
 
-
+    /**
+     * 路径信息
+     * @var string
+     */
+    private $pathInfo = '';
     /**
      * 协议头
      * @var array|false
@@ -265,7 +269,26 @@ class Request {
      * @return string
      */
     public function path_info() {
-        return $_SERVER['PATH_INFO'] ?? ($_SERVER['REQUEST_URI'] ?? '');
+        if (!empty($this->pathInfo)) {
+            return $this->pathInfo;
+        }
+        if (isset($_SERVER['PATH_INFO'])) {
+            return $this->pathInfo = $_SERVER['PATH_INFO'];
+        }
+        //如果没有pathinfo,自己处理通过请求的url处理
+        $pathInfo = $_SERVER['REQUEST_URI'];
+        //删除的url中的脚本路径和脚本名字
+        $scriptPath = substr($_SERVER['SCRIPT_NAME'], 0, strrpos($_SERVER['SCRIPT_NAME'], '/'));
+        $scriptName = substr($_SERVER['SCRIPT_NAME'], strrpos($_SERVER['SCRIPT_NAME'], '/') + 1);
+        $pathInfo = substr($pathInfo, strlen($scriptPath));
+        if (($pos = strpos($pathInfo, $scriptName)) === 1) {
+            $pathInfo = '/' . substr($pathInfo, $pos + strlen($scriptName));
+        }
+        //删除get参数?
+        if ($pos = strrpos($pathInfo, '?')) {
+            $pathInfo = substr($pathInfo, 0, $pos);
+        }
+        return $this->pathInfo = $pathInfo;
     }
 
     /**
