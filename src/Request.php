@@ -272,7 +272,7 @@ class Request {
         if (!empty($this->pathInfo)) {
             return $this->pathInfo;
         }
-        if (isset($_SERVER['PATH_INFO'])) {
+        if (isset($_SERVER['PATH_INFO']) && !empty($_SERVER['PATH_INFO'])) {
             return $this->pathInfo = $_SERVER['PATH_INFO'];
         }
         //如果没有pathinfo,自己处理通过请求的url处理
@@ -303,19 +303,20 @@ class Request {
      * 获取请求主页
      * @return string
      */
-    public function home() {
+    public function home($http = true) {
         $home = $_SERVER['REQUEST_URI'];
         if (!empty($_SERVER['QUERY_STRING'])) {
             $home = substr($_SERVER['REQUEST_URI'], 0, strpos($home, '?'));
         }
-        if (isset($_SERVER['PATH_INFO']) && !empty($_SERVER['PATH_INFO'])) {
-            $home = str_replace($_SERVER['PATH_INFO'], '', $home);
+        if (!empty($this->path_info())) {
+            $home = str_replace($this->path_info(), '', $home);
         } else {
             $home = substr($home, 0, strrpos($home, '/'));
         }
         if (!isset($_SERVER['REQUEST_SCHEME'])) {
-            $_SERVER['REQUEST_SCHEME'] = 'http';
+            $_SERVER['REQUEST_SCHEME'] = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
+
         }
-        return '//' . $_SERVER['HTTP_HOST'] . $home;
+        return ($http ? $_SERVER['REQUEST_SCHEME']:'') . '//' . $_SERVER['HTTP_HOST'] . $home;
     }
 }
