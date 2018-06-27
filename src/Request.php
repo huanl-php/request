@@ -52,6 +52,12 @@ class Request {
     private $contentType = '';
 
     /**
+     * 主页URL
+     * @var string
+     */
+    private $home = '';
+
+    /**
      * 请求编码
      * @var string
      */
@@ -304,6 +310,9 @@ class Request {
      * @return string
      */
     public function home() {
+        if ($this->home != '') {
+            return $this->home;
+        }
         $home = $_SERVER['REQUEST_URI'];
         if (!empty($_SERVER['QUERY_STRING'])) {
             $home = substr($_SERVER['REQUEST_URI'], 0, strpos($home, '?'));
