@@ -309,7 +309,7 @@ class Request {
      * 获取请求主页
      * @return string
      */
-    public function home() {
+    public function home($http=false) {
         if ($this->home != '') {
             return $this->home;
         }
@@ -326,6 +326,6 @@ class Request {
             $_SERVER['REQUEST_SCHEME'] = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
 
         }
-        return ($http ? $_SERVER['REQUEST_SCHEME']:'') . '//' . $_SERVER['HTTP_HOST'] . $this->home;
+        return ($http ? $_SERVER['REQUEST_SCHEME']:'//')  . $_SERVER['HTTP_HOST'] . $this->home;
     }
 }
