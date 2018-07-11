@@ -52,7 +52,7 @@ class Response {
      * 页面编码
      * @var string
      */
-    private $charset = 'UTF-8';
+    private $charset = 'utf-8';
 
 
     public function __construct($code = 200, string $type = 'html', $response = null) {
@@ -144,16 +144,29 @@ class Response {
     }
 
     /**
+     * 设置编码
+     * @param $charset
+     * @return Response
+     */
+    public function setCharset($charset): Response {
+        $this->charset = $charset;
+    }
+
+    /**
      * 设置返回的文件类型
      * @param string $type
      * @param string $charset
      * @return Response
      */
-    public function contentType(string $type, string $charset = 'UTF-8'): Response {
+    public function contentType(string $type, string $charset = 'utf-8'): Response {
         $this->content_type = $type;
-        $this->charset = $charset;
+        if (func_get_args() == 1) {
+            $charset = $this->charset;
+        } else {
+            $this->charset = $charset;
+        }
         $this->header('Content-Type: ' . $this->type2content($type) .
-            ($charset == false ? '; charset=' . $charset : ''));
+            ($charset != false ? ('; charset=' . $charset) : ''));
         return $this;
     }
 
