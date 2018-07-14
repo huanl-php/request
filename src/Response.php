@@ -244,4 +244,33 @@ class Response {
         $this->header('Content-Disposition: attachment; filename=' . $filename);
         return $this;
     }
+
+
+    /**
+     * 设置和删除cookie,只有一个name参数时删除cookie
+     * 到期时间为秒,不是unix时间戳,path默认值带/
+     * @param string $name
+     * @param string $value
+     * @param int $expire
+     * @param string $path
+     * @param string $domain
+     * @param bool $secure
+     * @param bool $httponly
+     * @return bool
+     */
+    public function cookie(string $name, string $value = '',
+                           int $expire = 0, string $path = '/',
+                           string $domain = '', bool $secure = false,
+                           bool $httponly = false
+    ): bool {
+        if (func_num_args() == 1) {
+            //到期时间是10,是过去是时间
+            return setcookie($name, '', 10);
+        }
+        if ($expire) {
+            $expire += time();
+        }
+        return setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+    }
+
 }
