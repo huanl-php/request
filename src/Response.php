@@ -185,7 +185,7 @@ class Response {
      * @return Response
      */
     public function statusCode($code): Response {
-        header($this->http_status_code[$code] ?? $code);
+        $this->header($this->http_status_code[$code] ?? $code);
         return $this;
     }
 
@@ -196,7 +196,7 @@ class Response {
      * @return Response
      */
     public function redirection(string $url, int $code = 302): Response {
-        header('Location: ' . $url, true, $code);
+        $this->header('Location: ' . $url, true, $code);
         return $this;
     }
 
