@@ -142,6 +142,19 @@ class Request {
     }
 
     /**
+     * 获取POST参数
+     * @param string $key
+     * @return array
+     */
+    public function post(string $key = ''): array {
+        if (empty($key)) {
+            //为空返回post数组
+            return $this->post;
+        }
+        return $this->post[$key];
+    }
+
+    /**
      * 处理form-data数据
      * @param $data
      * @param $boundary
