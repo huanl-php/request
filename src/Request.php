@@ -341,4 +341,27 @@ class Request {
         }
         return ($http ? $_SERVER['REQUEST_SCHEME'] . ':' : '') . '//' . $_SERVER['HTTP_HOST'] . $this->home;
     }
+
+    /**
+     * 获取客户ip
+     * @return string
+     */
+    public function getip() {
+        $arr_ip_header = array(
+            'HTTP_CDN_SRC_IP',
+            'HTTP_PROXY_CLIENT_IP',
+            'HTTP_WL_PROXY_CLIENT_IP',
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'REMOTE_ADDR',
+        );
+        $client_ip = 'unknown';
+        foreach ($arr_ip_header as $key) {
+            if (!empty($_SERVER[$key]) && strtolower($_SERVER[$key]) != 'unknown') {
+                $client_ip = $_SERVER[$key];
+                break;
+            }
+        }
+        return $client_ip;
+    }
 }
